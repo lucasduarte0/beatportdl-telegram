@@ -176,7 +176,7 @@ func (app *application) saveTrack(inst *beatport.Beatport, track *beatport.Track
 	// Create a temporary file path
 	tempDir := os.TempDir()
 	// Use a more robust way to create a unique temp file name if needed, but UUID should suffice for now
-	tempFilePath = filepath.Join(tempDir, fmt.Sprintf("beatportdl_%s_%s", uuid.New().String(), SanitizeFilename(baseFileName))) // Sanitize baseFileName
+	tempFilePath = filepath.Join(tempDir, SanitizeFilename(baseFileName)) // Sanitize baseFileName
 
 	// Note: Skipping existing file check as it's a unique temp file.
 	// If you need duplicate *download* prevention across runs, more state is needed.
@@ -354,21 +354,40 @@ func (app *application) handleUrl(url string, chatID int64) { // Add chatID para
 	switch link.Type {
 	case beatport.TrackLink:
 		app.handleTrackLink(inst, link, chatID) // Pass chatID
-	// case beatport.ReleaseLink:
-	// 	app.handleReleaseLink(inst, link, chatID) // Pass chatID
-	// case beatport.PlaylistLink:
-	// 	app.handlePlaylistLink(inst, link, chatID) // Pass chatID
-	// case beatport.ChartLink:
-	// 	app.handleChartLink(inst, link, chatID) // Pass chatID
-	// case beatport.LabelLink:
-	// 	app.handleLabelLink(inst, link, chatID) // Pass chatID
-	// case beatport.ArtistLink:
-	// 	app.handleArtistLink(inst, link, chatID) // Pass chatID
+	case beatport.ReleaseLink:
+		// TODO: Implement ReleaseLink support
+		_, _ = app.telegramBot.SendMessage(app.botCtx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "❌ Beatport Release links are not supported yet",
+		})
+	case beatport.PlaylistLink:
+		// TODO: Implement PlaylistLink support
+		_, _ = app.telegramBot.SendMessage(app.botCtx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "❌ Beatport Playlist links are not supported yet",
+		})
+	case beatport.ChartLink:
+		// TODO: Implement ChartLink support
+		_, _ = app.telegramBot.SendMessage(app.botCtx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "❌ Beatport Chart links are not supported yet",
+		})
+	case beatport.LabelLink:
+		// TODO: Implement LabelLink support
+		_, _ = app.telegramBot.SendMessage(app.botCtx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "❌ Beatport Label links are not supported yet",
+		})
+	case beatport.ArtistLink:
+		// TODO: Implement ArtistLink support
+		_, _ = app.telegramBot.SendMessage(app.botCtx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "❌ Beatport Artist links are not supported yet",
+		})
 	default:
 		app.LogError("handle URL", ErrUnsupportedLinkType)
-		// Optionally send error back via Telegram
 		if app.telegramBot != nil {
-			_, _ = app.telegramBot.SendMessage(app.botCtx, &bot.SendMessageParams{ // Use botCtx
+			_, _ = app.telegramBot.SendMessage(app.botCtx, &bot.SendMessageParams{
 				ChatID: chatID,
 				Text:   fmt.Sprintf("❌ Unsupported link type for URL: %s", url),
 			})

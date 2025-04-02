@@ -43,6 +43,8 @@ type AppConfig struct {
 
 	TagMappings map[string]map[string]string `yaml:"tag_mappings,omitempty"`
 
+	TelegramBotToken string `yaml:"telegram_bot_token,omitempty"`
+
 	Proxy string `yaml:"proxy,omitempty"`
 }
 
@@ -138,6 +140,10 @@ func Parse(filePath string) (*AppConfig, error) {
 
 	if config.TrackNumberPadding > 10 || config.TrackNumberPadding < 0 {
 		return nil, fmt.Errorf("invalid track number padding")
+	}
+
+	if config.TelegramBotToken == "" {
+		return nil, fmt.Errorf("telegram bot token is not provided")
 	}
 
 	return &config, nil
