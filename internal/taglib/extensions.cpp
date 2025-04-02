@@ -1,8 +1,8 @@
 #include "extensions.h"
-#include <taglib/fileref.h>
-#include <taglib/mp4file.h>
-#include <taglib/mp4tag.h>
-#include <taglib/tstring.h>
+#include "/opt/homebrew/Cellar/taglib/2.0.2/include/taglib/fileref.h"
+#include "/opt/homebrew/Cellar/taglib/2.0.2/include/taglib/mp4file.h"
+#include "/opt/homebrew/Cellar/taglib/2.0.2/include/taglib/mp4tag.h"
+#include "/opt/homebrew/Cellar/taglib/2.0.2/include/taglib/tstring.h"
 #include <string>
 #include <locale>
 #include <codecvt>

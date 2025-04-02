@@ -1,13 +1,13 @@
 package taglib
 
 /*
-	#cgo LDFLAGS: -ltag -ltag_c -lz
-	#include <stdlib.h>
-	#include <taglib/tag_c.h>
-	#include "extensions.h"
+#cgo pkg-config: taglib taglib_c
+#cgo CXXFLAGS: -std=c++11
+#include <stdlib.h>
+#include <taglib/tag_c.h>
+#include "extensions.h"
 */
 import "C"
-
 import (
 	"errors"
 	"unsafe"

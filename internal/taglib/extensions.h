@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include <taglib/tag_c.h>
+#include "/opt/homebrew/Cellar/taglib/2.0.2/include/taglib/tag_c.h"
 
 TagLib_File *taglib_file_new_wide(const char *filename);
 void taglib_set_item_mp4(TagLib_File *file, const char *key, const char *value);

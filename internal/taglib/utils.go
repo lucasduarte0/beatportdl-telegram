@@ -1,7 +1,11 @@
 package taglib
 
-// #include <stdlib.h>
-// #include <taglib/tag_c.h>
+/*
+#cgo CFLAGS: -I/opt/homebrew/Cellar/taglib/2.0.2/include
+#cgo LDFLAGS: -L/opt/homebrew/Cellar/taglib/2.0.2/lib -ltag -ltag_c -lz
+#include <stdlib.h>
+#include <taglib/tag_c.h>
+*/
 import "C"
 import "unsafe"
 
