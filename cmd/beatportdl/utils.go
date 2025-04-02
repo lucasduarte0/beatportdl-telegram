@@ -10,10 +10,31 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 )
+
+// SanitizeFilename removes characters that are typically invalid in filenames.
+func SanitizeFilename(name string) string {
+	// Remove invalid characters. Adjust the regex as needed.
+	re := regexp.MustCompile(`[<>:"/\\|?*\x00-\x1F]`)
+	sanitized := re.ReplaceAllString(name, "")
+	// Replace multiple spaces/underscores with a single one if desired
+	sanitized = strings.ReplaceAll(sanitized, "  ", " ")
+	sanitized = strings.ReplaceAll(sanitized, "__", "_")
+	// Trim leading/trailing whitespace/underscores
+	sanitized = strings.Trim(sanitized, " _")
+	// Limit length if necessary (e.g., 200 chars)
+	if len(sanitized) > 200 {
+		sanitized = sanitized[:200]
+	}
+	if sanitized == "" {
+		return "downloaded_track" // Fallback name
+	}
+	return sanitized
+}
 
 func (app *application) background(fn func()) {
 	app.wg.Add(1)
@@ -216,3 +237,4 @@ func CreateDirectory(directory string) error {
 	}
 	return nil
 }
+

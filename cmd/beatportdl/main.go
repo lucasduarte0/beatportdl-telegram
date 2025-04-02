@@ -1,15 +1,27 @@
 package main
 
 import (
+	"context" // Add context import
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/vbauerster/mpb/v8"
 	"io"
 	"os"
 	"sync"
 	"unspok3n/beatportdl/config"
 	"unspok3n/beatportdl/internal/beatport"
+
+	"path/filepath" // Add filepath import
+
+	"github.com/fatih/color"
+	"github.com/go-telegram/bot"               // Add bot import
+	"github.com/go-telegram/bot/models" // Add models import
+	"github.com/vbauerster/mpb/v8"
 )
+
+// TelegramRequest holds the URL and the ChatID from a Telegram message
+type TelegramRequest struct {
+	URL    string
+	ChatID int64
+}
 
 // Constants for configuration and cache filenames
 const (
@@ -31,7 +43,9 @@ type application struct {
 	urls             []string            // URLs to process
 	activeFiles      map[string]struct{} // Track active downloads to prevent duplicates
 	activeFilesMutex sync.RWMutex        // Mutex for thread-safe access to activeFiles
-	telegramURLs     chan string         // Channel to receive URLs from Telegram bot
+	telegramRequests chan TelegramRequest  // Channel to receive requests from Telegram bot
+	telegramBot      *bot.Bot            // Telegram bot instance
+	botCtx           context.Context     // Context for bot operations
 }
 
 func main() {
@@ -44,11 +58,12 @@ func main() {
 
 	// Create application instance with initial configuration
 	app := &application{
-		config:       cfg,
-		downloadSem:  make(chan struct{}, cfg.MaxDownloadWorkers), // Channel for download concurrency control
-		globalSem:    make(chan struct{}, cfg.MaxGlobalWorkers),   // Channel for global concurrency control
-		logWriter:    os.Stdout,                                   // Default to stdout for logging
-		telegramURLs: make(chan string, 10),                       // Buffered channel for Telegram URLs
+		config:           cfg,
+		downloadSem:      make(chan struct{}, cfg.MaxDownloadWorkers), // Channel for download concurrency control
+		globalSem:        make(chan struct{}, cfg.MaxGlobalWorkers),   // Channel for global concurrency control
+		logWriter:        os.Stdout,                                   // Default to stdout for logging
+		telegramRequests: make(chan TelegramRequest, 10),              // Buffered channel for Telegram requests
+		botCtx:           context.Background(),                        // Initialize bot context
 	}
 
 	// Set up error logging if enabled in config
@@ -84,14 +99,14 @@ func main() {
 
 	// Init telegram bot in a separate goroutine
 	fmt.Println("Initializing Telegram bot...")
-	go InitTelegramBot(app.telegramURLs) // Pass the channel
+	go InitTelegramBot(app) // Pass the application instance
 
-	// Main processing loop - listens for URLs from Telegram
-	fmt.Println("Waiting for URLs from Telegram...")
-	for url := range app.telegramURLs {
-		// Add received URL to the list to be processed
-		app.urls = append(app.urls, url)
-		fmt.Printf("Received URL from Telegram: %s\n", url) // Log received URL
+	// Main processing loop - listens for requests from Telegram
+	fmt.Println("Waiting for requests from Telegram...")
+	for req := range app.telegramRequests { // Receive TelegramRequest
+		// Add received URL to the list to be processed (maybe remove this later if only processing one at a time)
+		app.urls = append(app.urls, req.URL)
+		fmt.Printf("Received request from Telegram ChatID %d: %s\n", req.ChatID, req.URL) // Log received request
 
 		// --- Batch Processing Logic ---
 		// Decide when to trigger processing. For simplicity, let's process immediately.
@@ -114,9 +129,9 @@ func main() {
 			app.activeFiles[currentURL] = struct{}{}
 			app.activeFilesMutex.Unlock()
 
-			// Handle the URL in a background goroutine
+			// Handle the URL in a background goroutine, passing the ChatID
 			app.background(func() {
-				app.handleUrl(currentURL)
+				app.handleUrl(currentURL, req.ChatID) // Pass ChatID
 			})
 		}
 
@@ -130,6 +145,39 @@ func main() {
 		// --- End Batch Processing Logic ---
 	}
 
-	// This part might not be reached if telegramURLs channel is never closed
-	fmt.Println("Telegram URL channel closed. Exiting.")
+	// This part might not be reached if telegramRequests channel is never closed
+	fmt.Println("Telegram request channel closed. Exiting.")
+}
+
+// sendTrackViaTelegram sends the specified file as a document via Telegram.
+func (app *application) sendTrackViaTelegram(chatID int64, filePath string) error {
+	if app.telegramBot == nil {
+		return fmt.Errorf("telegram bot not initialized")
+	}
+
+	// Prepare the document input
+	fileContent, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to open temporary file %s: %w", filePath, err)
+	}
+	defer fileContent.Close()
+
+	doc := &models.InputFileUpload{
+		Filename: filepath.Base(filePath), // Use the base filename
+		Data:     fileContent,
+	}
+
+	// Send the document
+	_, err = app.telegramBot.SendDocument(app.botCtx, &bot.SendDocumentParams{
+		ChatID:  chatID,
+		Document: doc,
+		// Caption: fmt.Sprintf("Downloaded: %s", filepath.Base(filePath)), // Optional caption
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to send document via Telegram: %w", err)
+	}
+
+	fmt.Printf("Successfully sent %s to ChatID %d\n", filepath.Base(filePath), chatID)
+	return nil
 }
