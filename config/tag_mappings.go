@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"unspok3n/beatportdl/internal/validator"
+	"lucasduarte0/beatportdl-telegram/internal/validator"
 )
 
 func ValidateTagMappings(m map[string]map[string]string) error {

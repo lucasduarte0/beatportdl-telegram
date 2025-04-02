@@ -3,10 +3,11 @@ package config
 import (
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v2"
+	"lucasduarte0/beatportdl-telegram/internal/validator"
 	"os"
 	"os/exec"
-	"unspok3n/beatportdl/internal/validator"
+
+	"gopkg.in/yaml.v2"
 )
 
 type AppConfig struct {

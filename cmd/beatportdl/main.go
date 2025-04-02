@@ -4,15 +4,15 @@ import (
 	"context" // Add context import
 	"fmt"
 	"io"
+	"lucasduarte0/beatportdl-telegram/config"
+	"lucasduarte0/beatportdl-telegram/internal/beatport"
 	"os"
 	"sync"
-	"unspok3n/beatportdl/config"
-	"unspok3n/beatportdl/internal/beatport"
 
 	"path/filepath" // Add filepath import
 
 	"github.com/fatih/color"
-	"github.com/go-telegram/bot"               // Add bot import
+	"github.com/go-telegram/bot"        // Add bot import
 	"github.com/go-telegram/bot/models" // Add models import
 	"github.com/vbauerster/mpb/v8"
 )
@@ -31,21 +31,21 @@ const (
 
 // Application struct holds all the state for the program
 type application struct {
-	config           *config.AppConfig   // Configuration settings
-	logFile          *os.File            // File handle for error logging
-	logWriter        io.Writer           // Writer for logging (stdout or file)
-	bp               *beatport.Beatport  // Beatport API client
-	bs               *beatport.Beatport  // Beatsource API client
-	wg               sync.WaitGroup      // WaitGroup for tracking concurrent operations
-	downloadSem      chan struct{}       // Semaphore for limiting concurrent downloads
-	globalSem        chan struct{}       // Semaphore for limiting global concurrency
-	pbp              *mpb.Progress       // Progress bar manager
-	urls             []string            // URLs to process
-	activeFiles      map[string]struct{} // Track active downloads to prevent duplicates
-	activeFilesMutex sync.RWMutex        // Mutex for thread-safe access to activeFiles
-	telegramRequests chan TelegramRequest  // Channel to receive requests from Telegram bot
-	telegramBot      *bot.Bot            // Telegram bot instance
-	botCtx           context.Context     // Context for bot operations
+	config           *config.AppConfig    // Configuration settings
+	logFile          *os.File             // File handle for error logging
+	logWriter        io.Writer            // Writer for logging (stdout or file)
+	bp               *beatport.Beatport   // Beatport API client
+	bs               *beatport.Beatport   // Beatsource API client
+	wg               sync.WaitGroup       // WaitGroup for tracking concurrent operations
+	downloadSem      chan struct{}        // Semaphore for limiting concurrent downloads
+	globalSem        chan struct{}        // Semaphore for limiting global concurrency
+	pbp              *mpb.Progress        // Progress bar manager
+	urls             []string             // URLs to process
+	activeFiles      map[string]struct{}  // Track active downloads to prevent duplicates
+	activeFilesMutex sync.RWMutex         // Mutex for thread-safe access to activeFiles
+	telegramRequests chan TelegramRequest // Channel to receive requests from Telegram bot
+	telegramBot      *bot.Bot             // Telegram bot instance
+	botCtx           context.Context      // Context for bot operations
 }
 
 func main() {
@@ -169,7 +169,7 @@ func (app *application) sendTrackViaTelegram(chatID int64, filePath string) erro
 
 	// Send the document
 	_, err = app.telegramBot.SendDocument(app.botCtx, &bot.SendDocumentParams{
-		ChatID:  chatID,
+		ChatID:   chatID,
 		Document: doc,
 		// Caption: fmt.Sprintf("Downloaded: %s", filepath.Base(filePath)), // Optional caption
 	})

@@ -59,7 +59,7 @@ func InitTelegramBot(app *application) { // Accept the application instance
 	}
 
 	// Replace with your actual bot token (consider using environment variables)
-	botToken := os.Getenv("TELEGRAM_BOT_TOKEN")
+	botToken := app.config.TelegramBotToken
 	if botToken == "" {
 		fmt.Print("telegram bot token not found: please set TELEGRAM_BOT_TOKEN environment variable")
 		return

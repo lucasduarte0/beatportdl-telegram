@@ -4,12 +4,12 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"lucasduarte0/beatportdl-telegram/config"
+	"lucasduarte0/beatportdl-telegram/internal/beatport"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
-	"unspok3n/beatportdl/config"
-	"unspok3n/beatportdl/internal/beatport"
 )
 
 func Setup() (cfg *config.AppConfig, cachePath string, err error) {

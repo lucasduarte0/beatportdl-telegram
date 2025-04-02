@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"lucasduarte0/beatportdl-telegram/config"
+	"lucasduarte0/beatportdl-telegram/internal/beatport"
 	"sync"
-	"unspok3n/beatportdl/config"
-	"unspok3n/beatportdl/internal/beatport"
 
 	"github.com/go-telegram/bot" // Add models import
 	"github.com/google/uuid"

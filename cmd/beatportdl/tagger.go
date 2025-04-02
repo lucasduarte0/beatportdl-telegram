@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"lucasduarte0/beatportdl-telegram/config"
+	"lucasduarte0/beatportdl-telegram/internal/beatport"
+	"lucasduarte0/beatportdl-telegram/internal/taglib"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"unspok3n/beatportdl/config"
-	"unspok3n/beatportdl/internal/beatport"
-	"unspok3n/beatportdl/internal/taglib"
 )
 
 func (app *application) tagTrack(location string, track *beatport.Track, coverPath string) error {
