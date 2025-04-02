@@ -2,26 +2,22 @@ package main
 
 import (
 	"fmt"
-	"lucasduarte0/beatportdl-telegram/config"
+	"go.senan.xyz/taglib"
+	// "lucasduarte0/beatportdl-telegram/config" // Removed unused import
 	"lucasduarte0/beatportdl-telegram/internal/beatport"
-	"lucasduarte0/beatportdl-telegram/internal/taglib"
-	"os"
+	// "os" // Removed unused import
 	"path/filepath"
 	"strconv"
-	"strings"
+	// "strings" // Removed unused import
 )
 
-func (app *application) tagTrack(location string, track *beatport.Track, coverPath string) error {
+func (app *application) tagTrack(location string, track *beatport.Track, coverPath string) error { // Keep coverPath param for now, even if unused, to maintain signature
 	fileExt := filepath.Ext(location)
 	if !app.config.FixTags {
 		return nil
 	}
-	file, err := taglib.Read(location)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
 
+	// 1. Prepare mapping values (existing logic)
 	subgenre := ""
 	if track.Subgenre != nil {
 		subgenre = track.Subgenre.Name
@@ -82,70 +78,47 @@ func (app *application) tagTrack(location string, track *beatport.Track, coverPa
 		"release_label_url":      track.Release.Label.StoreUrl(),
 	}
 
-	if fileExt == ".m4a" {
-		if err = file.StripMp4(); err != nil {
-			return err
-		}
-	} else {
-		existingTags, err := file.PropertyKeys()
-		if err != nil {
-			return fmt.Errorf("read existing tags: %v", err)
-		}
+	// 2. Create the map for WriteTags
+	tagsToWrite := make(map[string][]string)
+	var currentMappings map[string]string
 
-		for _, tag := range existingTags {
-			file.SetProperty(tag, nil)
-		}
-	}
-
+	// Determine which mapping to use based on file extension
 	if fileExt == ".flac" {
-		for field, property := range app.config.TagMappings["flac"] {
-			value := mappingValues[field]
-			if value != "" {
-				file.SetProperty(property, &value)
-			}
-		}
+		currentMappings = app.config.TagMappings["flac"]
 	} else if fileExt == ".m4a" {
-		rawTags := make(map[string]string)
-
-		for field, property := range app.config.TagMappings["m4a"] {
-			if strings.HasSuffix(property, rawTagSuffix) {
-				if mappingValues[field] != "" {
-					property = strings.TrimSuffix(property, rawTagSuffix)
-					rawTags[property] = mappingValues[field]
-				}
-			} else {
-				value := mappingValues[field]
-				if value != "" {
-					file.SetProperty(property, &value)
-				}
-			}
-		}
-
-		for tag, value := range rawTags {
-			file.SetItemMp4(tag, value)
+		currentMappings = app.config.TagMappings["m4a"]
+	} else {
+		// Fallback or default mapping if needed, e.g., for MP3
+		if defaultMapping, ok := app.config.TagMappings["default"]; ok {
+			currentMappings = defaultMapping
+		} else {
+			// If no default, maybe skip tagging or return an error
+			return fmt.Errorf("no tag mapping found for file extension: %s", fileExt)
 		}
 	}
 
-	if coverPath != "" && (app.config.CoverSize != config.DefaultCoverSize || fileExt == ".m4a") {
-		data, err := os.ReadFile(coverPath)
-		if err != nil {
-			return err
-		}
-		picture := taglib.Picture{
-			MimeType:    "image/jpeg",
-			PictureType: "Front",
-			Description: "Cover",
-			Data:        data,
-			Size:        uint(len(data)),
-		}
-		if err := file.SetPicture(&picture); err != nil {
-			return err
+	// Populate tagsToWrite using the selected mapping
+	for field, property := range currentMappings {
+		value := mappingValues[field]
+		if value != "" {
+			// The new API takes []string, and handles standard/non-standard keys.
+			tagsToWrite[property] = []string{value}
 		}
 	}
 
-	if err = file.Save(); err != nil {
-		return err
+	// 3. Write tags using the new API
+	// Using 0 for options (no Clear, no DiffBeforeWrite) as per the simplest doc example.
+	// Add options like taglib.Clear if needed based on app config.
+	var writeOptions taglib.WriteOption = 0 // Correct type for options
+	// Example: if app.config.ClearExistingTags { writeOptions |= taglib.Clear }
+
+	err := taglib.WriteTags(location, tagsToWrite, writeOptions)
+	if err != nil {
+		return fmt.Errorf("failed to write tags: %w", err)
 	}
+
+	// 4. Picture handling is removed as the documented API (WriteTags) doesn't cover it,
+	// and the old method (file.SetPicture/Save) is incompatible with WriteTags.
 
 	return nil
 }

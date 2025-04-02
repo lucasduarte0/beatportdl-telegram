@@ -1,6 +1,8 @@
-module unspok3n/beatportdl
+module lucasduarte0/beatportdl-telegram
 
-go 1.22.5
+go 1.23
+
+toolchain go1.24.1
 
 require (
 	github.com/fatih/color v1.15.0
@@ -8,6 +10,12 @@ require (
 	github.com/grafov/m3u8 v0.12.0
 	github.com/vbauerster/mpb/v8 v8.8.3
 	gopkg.in/yaml.v2 v2.4.0
+)
+
+require (
+	github.com/tetratelabs/wazero v1.8.2 // indirect
+	github.com/wtolson/go-taglib v0.0.0-20210406152913-79209c280058 // indirect
+	go.senan.xyz/taglib v0.6.1 // indirect
 )
 
 require (
